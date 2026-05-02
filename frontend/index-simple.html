@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Buddy - AI Code Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat {
+            text-align: right;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h2 {
+            font-size: 18px;
+        }
+
+        select {
+            padding: 8px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+        }
+
+        .panel-content {
+            padding: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 400px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(240, 147, 251, 0.5);
+        }
+
+        .results {
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: #999;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <span>🤖</span>
+                <span>Dev Buddy</span>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-label">Session Time Saved</div>
+                    <div class="stat-value" id="sessionTime">0 min</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Code Input</h2>
+                    <select id="language">
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="typescript">TypeScript</option>
+                    </select>
+                </div>
+                <div class="panel-content">
+                    <textarea id="codeInput" placeholder="Paste your code here..."></textarea>
+                </div>
+                <div class="buttons">
+                    <button class="btn-primary" onclick="explainCode()">✨ Explain Code</button>
+                    <button class="btn-secondary" onclick="generateTests()">🧪 Generate Tests</button>
+                    <button class="btn-secondary" onclick="generateDocs()">📝 Generate Docs</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Results</h2>
+                    <div class="tabs">
+                        <div class="tab active" onclick="showTab('explanation')">Explanation</div>
+                        <div class="tab" onclick="showTab('tests')">Tests</div>
+                        <div class="tab" onclick="showTab('docs')">Docs</div>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="results" id="results">
+                        <div class="empty-state">
+                            <div class="empty-icon">💡</div>
+                            <p>No results yet</p>
+                            <small>Click a button to analyze your code</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001/api';
+        let sessionTimeSaved = 0;
+        let currentTab = 'explanation';
+        let results = {
+            explanation: null,
+            tests: null,
+            docs: null
+        };
+
+        function showTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            displayResults();
+        }
+
+        function showLoading() {
+            document.getElementById('results').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Processing with IBM watsonx AI...</p>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            document.getElementById('results').innerHTML = `
+                <div class="error">
+                    <strong>Error:</strong> ${message}
+                </div>
+            `;
+        }
+
+        function updateSessionTime(minutes) {
+            sessionTimeSaved += minutes;
+            document.getElementById('sessionTime').textContent = sessionTimeSaved + ' min';
+        }
+
+        async function explainCode() {
+            const code = document.getElementById('codeInput').value;
+            const language = document.getElementById('language').value;
+
+            if (!code.trim()) {
+                showError('Please enter some code to explain');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_URL}/explain`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, language })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    results.explanation = data.data;
+                    updateSessionTime(data.data.timeSaved);
+                    currentTab = 'explanation';
+                    displayResults();
+                } else {
+                    showError(data.error.message);
+                }
+            } catch (error) {
+                showError('Failed to connect to backend. Make sure the server is running on port 3001.');
+            }
+        }
+
+        async function generateTests() {
+            const code = document.getElementById('codeInput').value;
+            const language = document.getElementById('language').value;
+
+            if (!code.trim()) {
+                showError('Please enter some code to generate tests');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_URL}/generate-tests`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, language })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    results.tests = data.data;
+                    updateSessionTime(data.data.timeSaved);
+                    currentTab = 'tests';
+                    displayResults();
+                } else {
+                    showError(data.error.message);
+                }
+            } catch (error) {
+                showError('Failed to connect to backend. Make sure the server is running on port 3001.');
+            }
+        }
+
+        async function generateDocs() {
+            const code = document.getElementById('codeInput').value;
+            const language = document.getElementById('language').value;
+
+            if (!code.trim()) {
+                showError('Please enter some code to generate documentation');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_URL}/generate-docs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, language })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    results.docs = data.data;
+                    updateSessionTime(data.data.timeSaved);
+                    currentTab = 'docs';
+                    displayResults();
+                } else {
+                    showError(data.error.message);
+                }
+            } catch (error) {
+                showError('Failed to connect to backend. Make sure the server is running on port 3001.');
+            }
+        }
+
+        function displayResults() {
+            const resultsDiv = document.getElementById('results');
+            const data = results[currentTab];
+
+            if (!data) {
+                resultsDiv.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">💡</div>
+                        <p>No ${currentTab} yet</p>
+                        <small>Click the button to generate</small>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `<div class="result-section"><h3>⏱️ Time Saved: ${data.timeSaved} minutes</h3></div>`;
+
+            if (currentTab === 'explanation' && data.explanation) {
+                const exp = data.explanation;
+                if (exp.overview) {
+                    html += `<div class="result-section"><h3>📋 Overview</h3><p>${exp.overview}</p></div>`;
+                }
+                if (exp.keyConcepts) {
+                    html += `<div class="result-section"><h3>🎯 Key Concepts</h3><p>${exp.keyConcepts.join(', ')}</p></div>`;
+                }
+                if (exp.complexity) {
+                    html += `<div class="result-section"><h3>⚡ Complexity</h3><p>${exp.complexity}</p></div>`;
+                }
+            } else if (currentTab === 'tests' && data.tests) {
+                html += `<div class="result-section"><h3>🧪 Generated Tests</h3><pre>${data.tests}</pre></div>`;
+                if (data.coverage) {
+                    html += `<div class="result-section"><h3>📈 Coverage: ${data.coverage}</h3></div>`;
+                }
+            } else if (currentTab === 'docs' && data.documentation) {
+                html += `<div class="result-section"><h3>📝 Documentation</h3><pre>${data.documentation}</pre></div>`;
+                if (data.examples && data.examples.length > 0) {
+                    html += `<div class="result-section"><h3>💡 Examples</h3><pre>${data.examples.join('\n\n')}</pre></div>`;
+                }
+            }
+
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
